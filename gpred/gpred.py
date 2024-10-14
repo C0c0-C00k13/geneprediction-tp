@@ -1,3 +1,5 @@
+"""This is a python script to predict genes in a genome sequence."""
+
 import argparse
 import sys
 import os
@@ -62,14 +64,14 @@ def read_fasta(fasta_file: Path) -> str:
     :return: (str) Sequence from the genome. 
     """
     with open(fasta_file,"rt") as f_i:
-        ADN = ""
+        adn = ""
         for line in f_i:
             # print(f_i.readline())
-            ADN = ADN+f_i.readline()
-    ADN = ADN.replace("\n","")
-    ADN = ADN.upper()
-    # print(ADN)
-    return ADN
+            adn = adn+f_i.readline()
+    adn = adn.replace("\n","")
+    adn = adn.upper()
+    # print(adn)
+    return adn
 
 
 def find_start(start_regex: Pattern, sequence: str, start: int, stop: int) -> Union[int, None]:
@@ -83,8 +85,7 @@ def find_start(start_regex: Pattern, sequence: str, start: int, stop: int) -> Un
     """
     # codon d'initiation ( 'AUG', 'UUG', 'CUG', 'AUU' ou 'GUG')
     position = start_regex.search(sequence[start:stop])
-    
-    if position == None:
+    if position is None:
         return position
     else:
         return position.start()
@@ -99,35 +100,38 @@ def find_stop(stop_regex: Pattern, sequence: str, start: int) -> Union[int, None
     """
     # codon stop (UAA', 'UAG', ou 'UGA')
     position = stop_regex.search(sequence[start::3])
-    if position == None:
+    if position is None:
         return position
     else:
         return position.end()
 
 
-def has_shine_dalgarno(shine_regex: Pattern, sequence: str, start: int, max_shine_dalgarno_distance: int) -> bool:
+def has_shine_dalgarno(shine_regex: Pattern, sequence: str, start: int,\
+    max_shine_dalgarno_distance: int) -> bool:
     """Find a shine dalgarno motif before the start codon
 
     :param shine_regexp: A regex object that identifies a shine-dalgarno motif.
     :param sequence: (str) Sequence from the genome
     :param start: (int) Position of the start in the genome
-    :param max_shine_dalgarno_distance: (int) Maximum distance of the shine dalgarno to the start position
+    :param max_shine_dalgarno_distance: (int) Maximum distance of the shine dalgarno
+    to the start position
     :return: (boolean) true -> has a shine dalgarno upstream to the gene, false -> no
     """
     # Shine Dalgarno : AGGAGGUAA
     sh = shine_regex.finditer(sequence[(start-max_shine_dalgarno_distance):(start-6)])
-    # Conditions : 
+    # Conditions :
     # 1 - Ne "sort" pas de la séquence
     # 2 - Espace Au moins 6 nucléotides séparant S-D du codon start
-    # 3 - Trouver au moins 1 séquences S-D 
-    if (start - max_shine_dalgarno_distance < 0) or ((start - max_shine_dalgarno_distance) > (start - 6)) or (sh == None):
+    # 3 - Trouver au moins 1 séquences S-D
+    if (start - max_shine_dalgarno_distance < 0) or\
+        ((start - max_shine_dalgarno_distance) > (start - 6)) or (sh is None):
         return False
     else:
         return True
 
 
 
-def predict_genes(sequence: str, start_regex: Pattern, stop_regex: Pattern, shine_regex: Pattern, 
+def predict_genes(sequence: str, start_regex: Pattern, stop_regex: Pattern, shine_regex: Pattern,
                   min_gene_len: int, max_shine_dalgarno_distance: int, min_gap: int) -> List:
     """Predict most probable genes
 
@@ -136,15 +140,15 @@ def predict_genes(sequence: str, start_regex: Pattern, stop_regex: Pattern, shin
     :param stop_regexp: A regex object that identifies a stop codon.
     :param shine_regexp: A regex object that identifies a shine-dalgarno motif.
     :param min_gene_len: (int) Minimum gene length.
-    :param max_shine_dalgarno_distance: (int) Maximum distance of the shine dalgarno to the start position.
+    :param max_shine_dalgarno_distance: (int) Maximum distance of the shine dalgarno
+    to the start position.
     :param min_gap: (int) Minimum distance between two genes.
     :return: (list) List of [start, stop] position of each predicted genes.
     """
-    
     found_genes = []
     current_position = 0
     while len(sequence) - current_position >= min_gap:
-        current_position = find_start(start_regex, sequence, 
+        current_position = find_start(start_regex, sequence,
                                       current_position, len(sequence))
         if current_position is not None:
             stop = find_stop(stop_regex, sequence, current_position)
@@ -226,10 +230,10 @@ def main() -> None: # pragma: no cover
     Main program function
     """
     # ---------------------------
-    FILENAME = "data/listeria.fna"
-    FILENAME = isfile(FILENAME)
-    SEQUENCE = read_fasta(FILENAME)
-    # print(SEQUENCE)
+    filename = "data/listeria.fna"
+    filename = isfile(filename)
+    sequence = read_fasta(filename)
+    # print(sequence)
     # ---------------------------
     
     # Gene detection over genome involves to consider a thymine instead of
@@ -240,33 +244,33 @@ def main() -> None: # pragma: no cover
     stop_regex = re.compile('TA[GA]|TGA')
 
     # ---------------------------
-    # position = stop_regex.search(SEQUENCE[25::3])
+    # position = stop_regex.search(sequence[25::3])
     # print(position)
-    # position_courante = find_start(start_regex, SEQUENCE, 0, len(SEQUENCE))
-    # c_stop = find_stop(stop_regex, SEQUENCE, 0)
+    # position_courante = find_start(start_regex, sequence, 0, len(sequence))
+    # c_stop = find_stop(stop_regex, sequence, 0)
     # print(f"Position début : {position_courante}|| Position Fin : {c_stop}")
     
     # # Cas : aucun motif trouvé - pas d'attroibut span
-    # position_courante = find_start(start_regex, SEQUENCE, len(SEQUENCE), len(SEQUENCE))
-    # c_stop = find_stop(stop_regex, SEQUENCE, len(SEQUENCE))
+    # position_courante = find_start(start_regex, sequence, len(sequence), len(sequence))
+    # c_stop = find_stop(stop_regex, sequence, len(sequence))
     # print(f"Position début : {position_courante}|| Position Fin : {c_stop}")
     # ---------------------------
 
     # Shine AGGAGGUAA
-    #AGGA ou GGAGG 
+    #AGGA ou GGAGG
     shine_regex = re.compile('A?G?GAGG|GGAG|GG.{1}GG')
     
     # ---------------------------
-    # res = has_shine_dalgarno(shine_regex, SEQUENCE, start= 20, max_shine_dalgarno_distance= 1)
+    # res = has_shine_dalgarno(shine_regex, sequence, start= 20, max_shine_dalgarno_distance= 1)
     # print(res)
-    # sh = shine_regex.finditer(SEQUENCE[12:])
+    # sh = shine_regex.finditer(sequence[12:])
     # print(list(sh))
     # ---------------------------
 
-    liste_genes = predict_genes(sequence= SEQUENCE, start_regex= start_regex, stop_regex= stop_regex, shine_regex= shine_regex, 
+    liste_genes = predict_genes(sequence= sequence, start_regex= start_regex, stop_regex= stop_regex, shine_regex= shine_regex,
                   min_gene_len= 2, max_shine_dalgarno_distance= 12, min_gap= 3)
     print(liste_genes)
-    
+
     # Arguments
     args = get_arguments()
     # Let us do magic in 5' to 3'
