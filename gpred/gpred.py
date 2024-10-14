@@ -43,12 +43,12 @@ def get_arguments(): # pragma: no cover
                         help="Complete genome file in fasta format")
     parser.add_argument('-g', dest='min_gene_len', type=int, 
                         default=50, help="Minimum gene length to consider (default 50).")
-    parser.add_argument('-s', dest='max_shine_dalgarno_distance', type=int, 
+    parser.add_argument('-s', dest='max_shine_dalgarno_distance', type=int,
                         default=16, help="Maximum distance from start codon "
                         "where to look for a Shine-Dalgarno motif (default 16).")
     parser.add_argument('-d', dest='min_gap', type=int, default=40,
                         help="Minimum gap between two genes - shine box not included (default 40).")
-    parser.add_argument('-p', dest='predicted_genes_file', type=Path, 
+    parser.add_argument('-p', dest='predicted_genes_file', type=Path,
                         default=Path("predict_genes.csv"),
                         help="Tabular file giving position of predicted genes")
     parser.add_argument('-o', dest='fasta_file', type=Path,
@@ -202,12 +202,12 @@ def write_genes(fasta_file: Path, sequence: str, probable_genes: List[List[int]]
             for i,gene_pos in enumerate(probable_genes):
                 fasta.write(">gene_{0}{1}{2}{1}".format(
                     i+1, os.linesep, 
-                    fill(sequence[gene_pos[0]-1:gene_pos[1]])))
+                    textwrap.fill(sequence[gene_pos[0]-1:gene_pos[1]])))
             i = i+1
             for j,gene_pos in enumerate(probable_genes_comp):
                 fasta.write(">gene_{0}{1}{2}{1}".format(
                             i+1+j, os.linesep,
-                            fill(sequence_rc[gene_pos[0]-1:gene_pos[1]])))
+                            textwrap.fill(sequence_rc[gene_pos[0]-1:gene_pos[1]])))
     except IOError:
         sys.exit("Error cannot open {}".format(fasta_file))
 
